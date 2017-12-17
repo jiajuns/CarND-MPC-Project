@@ -6,7 +6,7 @@
 using CppAD::AD;
 
 // TODO: Set the timestep length and duration
-size_t N = 20;
+size_t N = 15;
 double dt = 0.1;
 
 // This value assumes the model presented in the classroom is used.
@@ -45,21 +45,21 @@ class FG_eval {
     // the Solver function below.
     fg[0] = 0.0;
     for (int t = 0; t < N; t++) {
-      fg[0] += 100 * CppAD::pow(vars[cte_start + t], 2) * exp(-t*0.05);
-      fg[0] += 0.2 * CppAD::pow(vars[epsi_start + t], 2) * exp(-t*0.05);
-      fg[0] += 0.25 * CppAD::pow(vars[v_start + t] - ref_v, 2) * exp(-t*0.05);
+      fg[0] += 10 * CppAD::pow(vars[cte_start + t], 2) * exp(-t*0.02);
+      fg[0] += 100 * CppAD::pow(vars[epsi_start + t], 2) * exp(-t*0.02);
+      fg[0] += 0.05 * CppAD::pow(vars[v_start + t] - ref_v, 2) * exp(-t*0.02);
     }
 
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
-      fg[0] += 200000 * CppAD::pow(vars[delta_start + t], 2) * exp(-t*0.05);
-      fg[0] += 20 * CppAD::pow(vars[a_start + t], 2) * exp(-t*0.05);
+      fg[0] += 20000 * CppAD::pow(vars[delta_start + t], 2) * exp(-t*0.02);
+      fg[0] += 1 * CppAD::pow(vars[a_start + t], 2) * exp(-t*0.02);
     }
 
     // Minimize the value gap between sequential actuations.
     for (int t = 0; t < N - 2; t++) {
-      fg[0] += 100 * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2) * exp(-t*0.05);
-      fg[0] += 0.1 * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2) * exp(-t*0.05);
+      fg[0] += 10000 * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2) * exp(-t*0.02);
+      fg[0] += 0.1 * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2) * exp(-t*0.02);
     }
 
     fg[1 + x_start] = vars[x_start];
@@ -111,7 +111,6 @@ MPC::~MPC() {}
 
 vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   bool ok = true;
-  size_t i;
   typedef CPPAD_TESTVECTOR(double) Dvector;
 
   int x_start = 0*N;

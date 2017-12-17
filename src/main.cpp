@@ -122,7 +122,7 @@ int main() {
           Eigen::Map<Eigen::VectorXd> waypoints_y_eig(ptry, 6);
 
           auto coeffs = polyfit(waypoints_x_eig, waypoints_y_eig, 3);
-          double epsi = - atan(coeffs[1] + 2 * px * coeffs[2] + 3 * coeffs[3] *pow(px,2));
+          double epsi = -v*delta*latency/Lf - atan(coeffs[1] + 2 * px * coeffs[2] + 3 * coeffs[3] *pow(px,2));
           double cte = polyeval(coeffs, 0) + v * sin(epsi) * latency;
 
           double steer_value = j[1]["steering_angle"];
@@ -132,7 +132,7 @@ int main() {
           double py_re = 0;
 
           Eigen::VectorXd state(6);
-          state << px_re, py_re, 0, v, cte, epsi;
+          state << px_re, py_re, -v*delta*latency/Lf, v, cte, epsi;
           auto vars = mpc.Solve(state, coeffs);
           steer_value = vars[0];
           throttle_value = vars[1];
