@@ -4,9 +4,43 @@ Self-Driving Car Engineer Nanodegree Program
 ---
 
 ## Rubric Points
+### Describe Model
+The kinematic model describe the vechile movement in the 2D space, which includes its x, y position, cross track error and psi error. Actuators include the steering angle and acceleration. Updates functions are shown below:
 
+`x[t+1] = x[t] + v[t]*cos(psi[t])*dt`
 
+`y[t+1] = y[t] + v[t]*sin(psi[t])*dt`
 
+`psi[t+1] = psi[t] - v[t]/Lf*delta[t]*dt`
+
+`v[t+1] = v[t] + a[t]*dt`
+
+`cte[t+1] = coeff[0] - (y[t] + v[t]*sin(psi[t])*dt)`
+
+`epis[t+1] = epsi[t] - ((psi[t]-psides0) - v[t]*delta[t]/Lf*dt)`
+
+### Choose of timestep and length (dt, N)
+The value choose here is `dt = 0.1` and `N = 15`. The reason I choose those value because the latency is 0.1 timestep that is close to the latency will make it more numeric stable. A larger value will introduces a lot of error at the first few timesteps and a lower value is not numerical stable. I choose `N = 15` depends on the speed of the vehicle, 15 gives a reasonable prediction for the forward future. If N is too large, some of the predicted waypoints dose not stable and to include those points into optimization dose not make sense.
+
+### Polynomial Fitting
+The waypoints are transformed to the vehicle location. This makes the codebase much cleaner and does not require further transformation after MPC prediction. Code to do the transformation is shown below:
+```
+for (int i = 0; i < ptsx.size(); i++) {
+  double dx = ptsx[i] - px;
+  double dy = ptsy[i] - py;
+  waypoints_x.push_back(dx * cos(-psi) - dy * sin(-psi));
+  waypoints_y.push_back(dx * sin(-psi) + dy * cos(-psi));
+}
+```
+
+### Control with Latency
+The approach to deal with latency is to predict the vehicle location after the latency time. Then feed this new state to the MPC solver. Since the state feeded into MPC solver is in the vehicle coordinate, we only need to predict how much it moved forward and then provide a angle offset. The code is provided below:
+```
+double px_re = v*latency;
+double py_re = 0;
+Eigen::VectorXd state(6);
+state << px_re, py_re, -v*delta*latency/Lf, v, cte, epsi;
+```
 
 ## Dependencies
 
