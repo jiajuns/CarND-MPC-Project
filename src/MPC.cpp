@@ -6,7 +6,7 @@
 using CppAD::AD;
 
 // TODO: Set the timestep length and duration
-size_t N = 10;
+size_t N = 20;
 double dt = 0.1;
 
 // This value assumes the model presented in the classroom is used.
@@ -35,7 +35,7 @@ class FG_eval {
   int epsi_start = 5*N;
   int delta_start = 6*N;
   int a_start = 7*N - 1;
-  float ref_v = 60.0;
+  float ref_v = 70.0;
 
   typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
   void operator()(ADvector& fg, const ADvector& vars) {
@@ -45,21 +45,21 @@ class FG_eval {
     // the Solver function below.
     fg[0] = 0.0;
     for (int t = 0; t < N; t++) {
-      fg[0] += 300 * CppAD::pow(vars[cte_start + t], 2);
-      fg[0] += 300 * CppAD::pow(vars[epsi_start + t], 2);
-      fg[0] += 0.5 * CppAD::pow(vars[v_start + t] - ref_v, 2);
+      fg[0] += 100 * CppAD::pow(vars[cte_start + t], 2) * exp(-t*0.05);
+      fg[0] += 0.2 * CppAD::pow(vars[epsi_start + t], 2) * exp(-t*0.05);
+      fg[0] += 0.25 * CppAD::pow(vars[v_start + t] - ref_v, 2) * exp(-t*0.05);
     }
 
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
-      fg[0] += 200 * CppAD::pow(vars[delta_start + t], 2);
-      fg[0] += 50 * CppAD::pow(vars[a_start + t], 2);
+      fg[0] += 200000 * CppAD::pow(vars[delta_start + t], 2) * exp(-t*0.05);
+      fg[0] += 20 * CppAD::pow(vars[a_start + t], 2) * exp(-t*0.05);
     }
 
     // Minimize the value gap between sequential actuations.
     for (int t = 0; t < N - 2; t++) {
-      fg[0] += 5 * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+      fg[0] += 100 * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2) * exp(-t*0.05);
+      fg[0] += 0.1 * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2) * exp(-t*0.05);
     }
 
     fg[1 + x_start] = vars[x_start];
@@ -89,10 +89,6 @@ class FG_eval {
       // Only consider the actuation at time t.
       AD<double> a = vars[a_start + t - 1];
       AD<double> delta = vars[delta_start + t - 1];
-      if (t > 1) {   // use previous actuations (to account for latency)
-        a = vars[a_start + t - 2];
-        delta = vars[delta_start + t - 2];
-      }
       AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * CppAD::pow(x0, 2) + coeffs[3] * CppAD::pow(x0, 3);
       AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * CppAD::pow(x0, 2));
 
